@@ -118,7 +118,7 @@ During FASER runs, everything will be launched, controlled and configured using 
 
 \subsection{Displaying Data using Grafana}
 
-Monitoring will be done using Grafana\footnote{FASER internal information:  \href{https://indico.cern.ch/event/832594/contributions/3544470/attachments/1926160/3188413/DAQ_monitoring_FASER_collaboration_meeting_Oct.pdf}{use of Grafana for online monitoring}}, a multi-platform open source analytics and interactive visualization software. This will let the user do basic statistics such as average and rate of physics event. The implementation is done by adding a metric to the selected variable chosen to be visualized in the code. For example, one would simply declare the metric
+Monitoring will be done using Grafana \cite{noauthor_grafana_nodate}, a multi-platform open source analytics and interactive visualization software. This will let the user do basic statistics such as average and rate of physics event. The implementation in the different modules, see section \ref{TriggerReceiverModule}, is done by adding a metric to the selected variable chosen to be visualized in the code. For example, one would simply declare the metric
 \begin{lstlisting}
 std::atomic<int> my_ metric1;
 \end{lstlisting}
@@ -126,11 +126,12 @@ and then increment it whenever a physics event has been detected.
 \begin{lstlisting}
 my_metric1 +=1;
 \end{lstlisting}
+The metric is periodically registered in a monitoring database which Grafana interfaces with. The monitoring database used is Influxdb \cite{noauthor_influxdb_nodate} - an open-source time series database.
 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.8\textwidth]{ChapterDAQ/Figs/GeneralDAQ/Grafana.jpg}
-\caption[Grafana]{The metric variable would be processed by Influxdb - an open-source time series database - and then by Grafana to produces visualisations graphs.}
+\caption[Grafana]{The metric variable would be processed by Influxdb and then by Grafana to produces visualisations graphs.}
 \label{fig:Grafana}
 \end{figure}
 
@@ -149,7 +150,7 @@ my_metric1 +=1;
 The Trigger Logic Board (TLB) and the Tracker Readout Boards (TRB) are both designed to be the interface between the hardware signals and the readout and control. The TRB digest signals straight from the SCT modules whereas the TLB receives the scintillators and calorimeter signals through the Digitizer. The solution is to use a GPIO (General Purpose Input-Output) developed by the University of Geneva called the "Unige USB3 GPIO" for both the TLB and the TRB as core module \footnote{The core of the board is an Intel Cyclone V A7 FPGA} with an additional dedicated interface board for each application, see Fig. \ref{fig:UnigeUSB3GPIO}. For the readout and the slow control, two interfaces can be used: USB3 and Ethernet. USB3 has initially been used but ultimately Ethernet will be the means of communication \cite{faser_collaboration_technical_2018}.
 
 
-Both TLB and TRB boards have a standalone GUI to perform the initial testing. As an example, Fig. \ref{fig:DAQGui} shows the TLB's GUI and its three tabs. The "board" tab controls the DAQ start and stop as well as sending direct parameters through slow control such as enabling or disabling the trigger and sending software triggers. The second tab is used to toggle the eight inputs that come in through the LVDS. It also allows the prescales to be set and additional control such as enabling the LHC Clock or using the on-board one.  The last tab is a 256 entries matrix that allows to set the LUT (more information \ref{LUT}).
+Both TLB and TRB boards have a standalone GUI to perform the initial testing. As an example, Fig. \ref{fig:DAQGui} shows the TLB's GUI and its three tabs. The "board" tab controls the DAQ start and stop as well as sending direct parameters through slow control such as enabling or disabling the trigger and sending software triggers. The second tab is used to toggle the eight inputs that come in through the LVDS. It also allows the prescales to be set and additional control such as enabling the LHC Clock or using the on-board one.  The last tab is a 256 entries matrix that allows to set the LUT (more information in \ref{LUT}).
 
 \begin{figure}[htbp!] 
 \centering    
@@ -160,9 +161,20 @@ Both TLB and TRB boards have a standalone GUI to perform the initial testing. As
 
 Once the data acquisition is started, the TLB can output two types of data: trigger data or monitoring data depending on which one was enabled. The trigger data is sent out in chunks  of 5 "words" of 32 bits, see Fig. \ref{fig:ReadoutData}.
 
-First a Header is used to mark the beginning of the incoming trigger data. A trigger header is 0xFEAD000A in hexadecimal whereas a monitoring header is 0xFEAD0050. The second word contains the Event Counter coded into 24 bits and the third word uses the whole 32 bits to code the orbit counter. The fourth word is the Bunch Counter (0 to 3563) that uses the required 12 bits. The fifth and last word code different information. The first bits code the Input bits (next clock) and Input Bits. Bits 16 to 21 code the Trigger Before Prescale (TBP) where each of the bits is a trigger signal. Bits 24 to 29 code the Trigger After Prescale (TAP).
+First a header is used to mark the beginning of the incoming trigger data. The second word contains the Event Counter coded into 24 bits and the third word uses the whole 32 bits to code the orbit counter. The fourth word is the Bunch Counter (0 to 3563) that uses the required 12 bits. The fifth and last word code different information. The first bits code the Input bits (next clock) and Input Bits. Bits 16 to 21 code the Trigger Before Prescale (TBP) where each of the bits is a trigger signal. Bits 24 to 29 code the Trigger After Prescale (TAP).
 
-The Monitoring Data, used for debugging, follows the same word order but has a total of 25 words to code more information. Because the Monitoring Data rate is low compared to the Trigger Data\footnote{Max trigger rate: 1 kHz, Monitoring rate: 0.001 Hz to 11.2 kHz}, several triggers will arrive in between monitoring data as well as information on events that are vetoed and thus not recorded as Trigger Data. This is why TBP now uses whole words to count up the hundreds or thousands of trigger that will have arrived and are now labelled TBP0 to TBP5. Additional Trigger after veto are used to count the trigger that have been vetoed and finally, the last four word code the different sources of veto. The full TLB data format is showed in Appendix \ref{TLBDataFormat} \nameref{TLBDataFormat}.
+The Monitoring Data, used for debugging, follows the same word order but has a total of 25 words to code more information. Because the Monitoring Data rate is low compared to the Trigger Data\footnote{Max trigger rate: 1 kHz, Monitoring rate: 0.001 Hz to 11.2 kHz}, several triggers will arrive in between monitoring data as well as information on events that are vetoed and thus not recorded as Trigger Data. This is why TBP now uses whole words to count up the hundreds or thousands of trigger that will have arrived and are now labelled TBP0 to TBP5. Additional Trigger after veto are used to count the trigger that have been vetoed and finally, the last four word code the different sources of veto. The full TLB data format is showed on Fig. \ref{fig:TLBDataFormatPDF}.
+
+
+\begin{figure}[htbp!]
+   \centering
+    \includegraphics[page=1,width=.8\textwidth, trim={2.0cm 8.0cm 1.7cm 1.8cm}, clip]{Appendix3/TLBdataformat.pdf}
+   \includegraphics[page=2,width=.8\textwidth, trim={2.0cm 18.5cm 1.7cm 1.8cm}, clip]{Appendix3/TLBdataformat.pdf}
+ \caption{TLB Data Format}
+ \label{fig:TLBDataFormatPDF}
+\end{figure}
+
+
 
 \begin{figure}[htbp!] 
 \centering    
@@ -178,14 +190,29 @@ The Monitoring Data, used for debugging, follows the same word order but has a t
 \nomenclature[z-SC]{SC}{Slow Control}
 \nomenclature[z-BCR]{BCR}{Bunch Crossing Reset}
 
-"The Trigger Logic Board (TLB) is the central triggering module of the FASER TDAQ system. It
-receives input signals at 125 MHz from the scintillators and the calorimeter, digitized in a CAEN VX1730 VME board \footnote{"The digitizer samples at 500 MHz, but its coincidence logic and outputs only run at 125 MHz"\cite{debieux_trigger_2019}.}. The TLB processes these signals to create the trigger decision (L1A) which is sent to the detector readout boards"\cite{debieux_trigger_2019}. Another way of saying it, is that the TLB is the brain of FASER. This board receives signals from every detector and then takes the decision to store the event or not. A flow chart presenting the operation of the TLB is shown on Fig.\ref{fig:TLBSchema}. The eight signals from the digitizer come in the TLB in the bottom right corner of the figure \ref{fig:TLBSchema}. These eight trigger lines coming from the CAEN digitizer are synchronized to the 40 MHz clock which can be selected to either come from an on-board clock or - during operations - from the LHC clock. The LHC clock signal is processed by a clock cleaner board before coming in the TLB. Each of the eight channels can then be individually delayed to account for differences in cable length and then go into the coincidence logic detailed in subsection \ref{LUT} \nameref{LUT}. These four outgoing trigger lines can now be individually prescaled as well as an additional random trigger generator (TBP5) and a software trigger (TBP6) both controlled via SC (Slow Control). More information on these modules can be found in subsection \ref{Prescales} - \ref{Software Trigger}. The signal from these six signals is almost ready to become an L1A. However, FASER has different sources of deadtime where it is unable to read data, the main one being because of the tracker boards deadtime. In fact, the TLB must first verify that a previous L1A wasn't sent out the previous 5-10 $\mu s$ as the detector need this time to readout the data. It must also check that the signal is not within a few clock cycles of a BCR.
+The TLB is the central triggering module of the FASER TDAQ system. It
+receives input signals at 125 MHz from the scintillators and the calorimeter that have been converted into computer-readable information via the digitizer\footnote{The digitizer, a CAEN VX1730 VME board, samples at 500 MHz, but its coincidence logic and outputs run at 125 MHz.}. The TLB processes these signals to create the trigger decision (L1A) which is sent to the detector readout boards. The TLB is the brain of FASER as it receives signals from every detector and then takes the decision to store the event or not. A flow chart presenting the operation of the TLB is shown on Fig.\ref{fig:TLBSchema}. The eight signals from the digitizer come in the TLB in the bottom right corner of the figure \ref{fig:TLBSchema}. These eight trigger lines coming from the CAEN digitizer are synchronized to the 40 MHz clock which can be selected to either come from an on-board clock or - during operations - from the LHC clock. The LHC clock signal is processed by a clock cleaner board before coming in the TLB. Each of the eight channels can then be individually delayed to account for differences in cable length and then go into the coincidence logic detailed in subsection \ref{LUT} \nameref{LUT}. These four outgoing trigger lines, as well as the random trigger (TBP5) and a software trigger (TBP6)  both controlled via SC (Slow Control), can now be individually prescaled. More information on these modules can be found in subsection \ref{Prescales} - \ref{Software Trigger}. The signal from these six signals is almost ready to become an L1A. However, FASER has different sources of deadtime, see Table \ref{table:DeadtimeSources}, where it is unable to read data. In fact, the TLB must first verify that a previous L1A wasn't sent out the previous 5-10 $\mu s$ as the detector need this time to readout the data. It must also check that the signal is not within a few clock cycles of a BCR.
 
+\begin{table}[htbp!] 
+\caption{Sources of deadtime.}
+\centering
+\label{table:DeadtimeSources}
+\begin{tabular}{l p{10cm}}
+\toprule
+Simple Deadtime: & Number of 25ns clock cycles after a L1A
+where a new L1A is vetoed.\\
+BCR: & A dead time is issued if a BCR was sent in the last 6 CLKs, this CLK or the next two CLK
+cycles.\\
+Busy (tracker): & Designed not to allow a new L1A while the tracker is reading out an event.\\
+Rate Limiter: & Introduces dead time after three L1As in 15 turns. Triggers are rejected and  the output rate is kept below 2.25 kHz.\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.7\textwidth]{TLBSchema.png}
-\caption[TLB Schema]{TLB Schema - Eight trigger inputs are received from the right. Some coincidence logic is applied via a LUT and if no veto is applied it sends out an L1A to the tracker boards and the digitizer.}
+\caption[TLB Schema]{TLB Schema - 8 trigger inputs are received from the right. Some coincidence logic is applied via a LUT and if no veto is applied it sends out an L1A to the tracker boards and the digitizer.}
 \label{fig:TLBSchema}
 \end{figure}
 
@@ -229,9 +256,9 @@ receives input signals at 125 MHz from the scintillators and the calorimeter, di
     \label{fig:LUT}
 \end{wrapfigure}
 
-The coincidence logic is done using a Lookup Table (LUT). The LUT is a 256 input table (8 bits) where each input receives a value from 0-16 (4 bits). The benefits of a LUT are that it saves precious computing time and is easily reprogrammable via slow control because it is stored in RAM. It works by receiving the eighth input channels (TSig1-8) from the digitizer and outputting a 4 bit value accordingly. This 4 bit value are 4 user defined coincidence trigger lines before prescale (TBP1-4). This allows to setup complicated logic via software as opposite to via hardware.
+The coincidence logic is done using a Lookup Table (LUT). The LUT is a 256 input table (8 bits) where each input receives a value from 0-16 (4 bits). The benefits of a LUT are that it saves precious computing time and is easily reprogrammable via slow control because it is stored in RAM. It works by receiving the eight input channels (TSig1-8) from the digitizer and outputting a 4 bit value accordingly. This 4 bit value are 4 user defined coincidence trigger lines before prescale (TBP1-4). This allows to setup complicated logic via software as opposed to via hardware.
 
-Figure \ref{fig:LUT} helps visualize how the LUT converts the eight signals from the digitizer to 4 coincidence lines. One important thing to note is that every 256 values from the LUT must be configured every time the TLB is powered on because, as mentioned before, the LUT is stored in RAM. Table \ref{table:LUTtable} represents how the user would fill a LUT with no coincidence - by assigning each of the 256 inputs to 0.
+Figure \ref{fig:LUT} helps visualize how the LUT converts the eight signals from the digitizer to 4 coincidence lines. One important thing to note is that every 256 values from the LUT must be configured every time the TLB is powered on because, as mentioned before, the LUT is stored in RAM. Table \ref{table:LUTtable} represents how the user would fill a LUT that triggers on the first channel - by assigning LutArray \#1 to 1.
 
 \begin{table}[htbp!] 
 \caption{An example of LUT setup in software.}
@@ -241,7 +268,7 @@ Figure \ref{fig:LUT} helps visualize how the LUT converts the eight signals from
 \toprule
 LUTArray & \#0 & \#1 & \#2 & \#3 & \#n & \#255 \\
 \midrule
-Value & 0 & 0 & 0  & 0 & ... & 0 \\
+Value & 0 & 1 & 0  & 0 & ... & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -371,9 +398,9 @@ The first element that has been tested is the sampling phase. We want the TLB in
     \begin{tikztimingtable}
       LHC Clock 40\,MHz  & 6{1.25C} N(A1) 1{1.25C} N(A2) 1{1.25C} N(A3) 9{1.25C}  \\
       \\
-      Jitter -4[ns] & 6.75L 3.2H 11.3L \\
-      Digitizer Pulse +0[ns] & 7.15L 3.2H 10.9L \\
-      Jitter +4[ns] & 7.5L N(B1) 0.05L 1.2H N(B2) 1.25H N(B3) 0.35H 0.4H 10.5L \\
+      Jitter -4 ns & 6.75L 3.2H 11.3L \\
+      Digitizer Pulse +0 ns & 7.15L 3.2H 10.9L \\
+      Jitter +4 ns & 7.5L N(B1) 0.05L 1.2H N(B2) 1.25H N(B3) 0.35H 0.4H 10.5L \\
       \extracode
       \tablerules
       \begin{pgfonlayer}{background}
@@ -418,7 +445,7 @@ The next important tuneable setting is the input delay. Because the different de
 \label{fig:InputDelay}
 \end{figure}
 
-The test setup - illustrated in Fig. \ref{fig:InputDelaySchema} - had the BCR0 signal from the TLB split with a T-connector into two cables to the oscilloscope. Both signals then go to the digitizer channel0 and channel2 (the digitizer actually has 16 inputs but every odd channel is merged with the even one) with the 30 [ns] longer cable going to channel0. What we see on the oscilloscope on Fig. \ref{fig:InputDelayResults} is three signals. In yellow, the C1 delayed signal with respect to the pink C2 and the blue L1A. The test was successful because no L1A were detected if we asked a coincidence on channel0 and channel2 via SC. However, when we delayed the C2 signal by one or two clock cycle (25 - 50  ns) then we would get an L1A which is what happened in Fig. \ref{fig:InputDelayResults}.
+The test setup, illustrated in Fig. \ref{fig:InputDelaySchema}, had the BCR0 signal from the TLB split with a T-connector into two cables - one 30 ns longer than the other - to the oscilloscope. Both signals then go to the digitizer channel0 and channel2 (the digitizer actually has 16 inputs but every odd channel is merged with the even one) with the 30 ns longer cable going to channel0. What we see on the oscilloscope on Fig. \ref{fig:InputDelayResults} is three signals. In yellow, the C1 delayed signal with respect to the pink C2 and the blue L1A. The test was successful because no L1A were detected if we asked a coincidence on channel0 and channel2 via SC. However, when we delayed the C2 signal by one or two clock cycle (25 - 50 ns) then we would get an L1A which is what happened in Fig. \ref{fig:InputDelayResults}.
 
 \begin{figure}[htbp!]
     \centering
@@ -430,7 +457,7 @@ The test setup - illustrated in Fig. \ref{fig:InputDelaySchema} - had the BCR0 s
     \filldraw[fill=PCBgreen!90, draw=black] (0,0) rectangle (1,6);
     \node[fill=white, text=black, draw=black] at (0.5,3.0) {\tiny BCR0};
     \filldraw[fill=white, draw=black] (0.5,3.5) circle (0.2);
-    \node[fill=white, text=black, draw=black] at (2.5,2.25) {\tiny 30[ns] delay};
+    \node[fill=white, text=black, draw=black] at (2.5,2.25) {\tiny 30 ns delay};
     \filldraw[fill=Gray, draw=black] (2,2.75) rectangle (3,3.25); %30ns delay box
     \node[fill=white, text=black, draw=black] at (0.5,1.0) {\tiny L1A};
     \filldraw[fill=white, draw=black] (0.5,1.5) circle (0.2);
@@ -500,10 +527,10 @@ Coincidence on ch0 and ch2 & 0 & 0 & 0  & 1 & ... & 0 \\
 \subsection{Prescales}
 \label{Prescales}
 
-Prescales allow to sample the incoming data by selecting only a fraction of it. For example if you set prescale to 2 then you would only get every odd incoming signals. To test if the prescales where working, we sent fixed pulses with a signal generator - Fig.\ref{fig:SignalGenerator} - at 2[kHz] with a signal width on 40[ns] and 1 Volt peak to peak. Table \ref{table:prescale} contains data taken from the TLB's GUI. As expected the time to fill increase by two and seven-fold with the prescale setting. Additional test, using the oscilloscope to visualize, where performed and can be see on Fig. \ref{fig:Prescales}. The yellow signal on channel1, C1, represents the pulse generator whereas the pink signal C2 represents the L1As. In  Fig.\ref{fig:2kHzPrescale1} yellow and pink signals overlap because for every pulse sent, an L1A is emitted. However for Fig.\ref{fig:2kHzPrescale2} one in two signals gets vetoed by the prescale setting and in Fig. \ref{fig:2kHzPrescale3} one in three.
+Prescales allows to sample the incoming data by selecting only a fraction of it. For example if you set prescale to 2 then only every 2nd trigger is passed, for a prescale of 3 only every 3rd signal is passed and so on. To test if the prescales where working, we sent fixed pulses with a signal generator - Fig.\ref{fig:SignalGenerator} - at 2 kHz with a signal width of 40 ns and 1 Volt peak to peak. Table \ref{table:prescale} contains data taken from the TLB's GUI. As expected the time to fill increase by two and seven-fold with the prescale setting. Additional tests, using the oscilloscope to visualize, were performed and can be seen on Fig. \ref{fig:Prescales}. The yellow signal on channel1, C1, represents the pulse generator whereas the pink signal C2 represents the L1As. In  Fig.\ref{fig:2kHzPrescale1} yellow and pink signals overlap because for every pulse sent, an L1A is emitted. However for Fig.\ref{fig:2kHzPrescale2} one in two signals gets vetoed by the prescale setting and in Fig. \ref{fig:2kHzPrescale3} one in three.
 
 \begin{table}[htbp!]
-\caption{Prescale table for a pulse frequency of 1[kHz] and a width of 40 [ns]. Time values are to fill a 1024KB file.}
+\caption{Prescale table for a pulse frequency of 1[kHz] and a width of 40 ns. Time values are to fill a 1024KB file.}
 \centering
 \label{table:prescale}
 \begin{tabular}{c c c c c}
@@ -552,7 +579,7 @@ Prescale setting & Time to fill [h:m:s] & T [s] & \# events & L1A frq [Hz] \\
 \subsection{Random Trigger}
 \label{Random Trigger}
 
-Random triggers are "pseudo-random generator generating 25ns wide pulses (TBP5) at a user-settable (SC) average pulse rate of about 10-1000Hz" \cite{debieux_trigger_2019}. It is a unique input line that has 8 different settings ranging from 0 to 7. In our test we tried 3 different settings shown in Table \ref{table:RandomTrigger}. We see that the frequencies range from 20-360Hz close to what was specified in the TLB specifications\footnote{A setting of 0 is actually the highest frequency one can set and should be even higher in frequency}. Another measurements made was the time between two outgoing L1As shown in Fig. \ref{fig:RandomGenerator}. We see for these two settings that the distribution is indeed random as intended.
+Random triggers are a pseudo-random generator generating 25 ns wide pulses (TBP5) at a user-settable (SC) average pulse rate of about 10-1000Hz. It is a unique input line that has 8 different settings ranging from 0 to 7. In our test we tried 3 different settings shown in Table \ref{table:RandomTrigger}. We see that the frequencies range from 20-360Hz close to what was specified in the TLB specifications\footnote{A setting of 0 is actually the highest frequency one can set and should be even higher in frequency}. Another measurements made was the time between two outgoing L1As shown in Fig. \ref{fig:RandomGenerator}. We see for these two settings that the distribution is indeed random as intended.
 
 \begin{figure}[htbp!] 
 \centering    
@@ -579,7 +606,7 @@ Random setting & Time to fill [h:m:s] & Avg time btwn triggers [s] & Avg frq [Hz
 \subsection{Software Trigger}
 \label{Software Trigger}
 
-Software trigger is an additional trigger line that is user settable. For this module testing, we simply sent 10 software triggers via the GUI while taking data. This is done by ticking the SoftwareTrigger box and pressing the "Set" button, see Fig. \ref{fig:SoftwareTriggerGUI}. This gives the plot on Fig. \ref{fig:SoftwareTriggerGraph} which shows the ten software triggers. The x-axis represents the time it took to send the different trigger signals.
+Software trigger is an additional trigger line that is user settable. For this module testing, we simply sent 10 software triggers via the GUI, see Fig. \ref{fig:SoftwareTriggerGUI}, while taking data. This gives the plot on Fig. \ref{fig:SoftwareTriggerGraph} which shows the ten software triggers. The x-axis represents the time it took to send the different trigger signals.
 
 \begin{figure}[htbp!] 
 \centering  
@@ -599,9 +626,9 @@ Software trigger is an additional trigger line that is user settable. For this m
 \label{SoftwareTrigger}
 \end{figure}
 
-\subsection{Sampling Rate}
+\subsection{Deadtime from the Rate Limiter}
 
-By design the TLB's rate is limited to three L1As per 15 orbits. This means that if you feed the BCR signal you'll only get an L1A every 5 orbits. This is what was tested on Fig. \ref{fig:SamplingRate}. The yellow signal on C1 is the BCR signal at 11.245 kHz and the pink signal are the L1As at 2.249 kHz \footnote{Calculation: $\frac{3}{15\cdot\frac{1}{11245}}=2.249 kHz$}. As expected we see a pink L1A every 5 yellow BCR because of the vetoing, so this works as intended.
+By design the TLB's rate is limited to three L1As per 15 orbits to protect from noisy triggers. This means that if you feed the BCR signal you'll only get an L1A every 5 orbits. This is what was tested on Fig. \ref{fig:SamplingRate}. The yellow signal on C1 is the BCR signal at 11.245 kHz and the pink signal are the L1As at 2.249 kHz \footnote{Calculation: $\frac{3}{15\cdot\frac{1}{11245}}=2.249 kHz$}. As expected we see a pink L1A every 5 yellow BCR because of the vetoing.
 
 \begin{figure}[htbp!] 
 \centering    
@@ -610,9 +637,9 @@ By design the TLB's rate is limited to three L1As per 15 orbits. This means that
 \label{fig:SamplingRate}
 \end{figure}
 
-\subsection{Deadtime}
+\subsection{Simple Deadtime}
 
-To test the deadtime, we generate with the pulse generator 10 Mhz pulses with 10 cycles, 40 ns width and 1 volt peak to peak. On Fig. \ref{fig:Deadtime0} we see the three L1As in pink. There are only three because of the rate limiter is kicking in. They are at the same frequency as the driving signal with a phase because of the processing and cable length. When then set the deadtime parameter to 10 in Fig.\ref{fig:Deadtime10} which results in the L1As being separated by 10 clock cycles or 250 ns as expected.
+To test the simple deadtime, we generate with the pulse generator 10 Mhz pulses with 10 cycles, 40 ns width and 1 volt peak to peak. On Fig. \ref{fig:Deadtime0} we see the three L1As in pink. There are only three because of the rate limiter is kicking in. They are at the same frequency as the driving signal with a phase because of the processing and cable length. Setting the simple deadtime parameter to 10 in Fig.\ref{fig:Deadtime10} results in the L1As being separated by 10 clock cycles or 250 ns as expected.
 
 \begin{figure}[htbp!] 
 \centering    
@@ -630,7 +657,7 @@ To test the deadtime, we generate with the pulse generator 10 Mhz pulses with 10
 \label{fig:Deadtime}
 \end{figure}
 
-\subsection{Deadtime Manager}
+\subsection{Deadtime from the BCR veto}
 
 \nomenclature[z-BCID]{BCID}{Bunch Counter Identifier}
 
@@ -657,7 +684,7 @@ The deadtime manager takes care of vetoing L1As via multiple criterium. One of t
 \label{fig:DeadtimeManager}
 \end{figure}
 
-Another thing we are able to see in the output data are the sources of veto. For example in Fig. \ref{fig:VetoSources} we read the monitoring data for 11245 BCRs with the deadtime setting set to 10, the frequency of the signal generator set to 10[MHz], 100 pulses with a pulse period of 11[ns] and a width of 40 [ns]. We are then able to see the simple deadtime, the BCR deadtime, the busy tracker (not working in our setup because no tracker connected) and the rate limiter.
+Another thing we are able to see in the output data are the sources of veto. For example in Fig. \ref{fig:VetoSources} we read the monitoring data for 11245 BCRs with the deadtime setting set to 10, the frequency of the signal generator set to 10 MHz, 100 pulses with a pulse period of 11 ns and a width of 40 ns. We are then able to see the simple deadtime, the BCR deadtime, the busy tracker (not working in our setup because no tracker connected) and the rate limiter.
 
 \begin{figure}[htbp!] 
 \centering    
@@ -668,7 +695,7 @@ Another thing we are able to see in the output data are the sources of veto. For
 
 \subsection{Output Delay}
 
-The Output delay consists of delaying the outgoing L1A signal from the TLB. "It is a programmable delay for sending L1A signals at the right latency for each readout output. Each output delay is individually set by SC in CLK counts (7bits)" \cite{debieux_trigger_2019}. The option in the GUI is labelled DigitizerDelay and we tried three different options presented in Table \ref{table:Outputtable}. The results can be seen on Fig. \ref{fig:OutputDelay}. From left to right we see the first signal has the 16 clock cycle delay which corresponds to 400[ns], the second pulse is with the 4 clock cycle delay which corresponds to 100 [ns] and the third pulse is with no delay. We see the inherent delay from computing which is roughly 100[ns].
+The Output delay consists of delaying the outgoing L1A signal from the TLB. "It is a programmable delay for sending L1A signals at the right latency for each readout output. Each output delay is individually set by SC in CLK counts (7bits)" \cite{debieux_trigger_2019}. The option in the GUI is labelled DigitizerDelay and we tried three different options presented in Table \ref{table:Outputtable}. The results can be seen on Fig. \ref{fig:OutputDelay}. From left to right we see the first signal has the 16 clock cycle delay which corresponds to 400 ns, the second pulse is with the 4 clock cycle delay which corresponds to 100 ns and the third pulse is with no delay. We see the inherent delay from computing which is roughly 100 ns.
 
 \begin{table}
 \caption{Output delay.}
@@ -698,34 +725,19 @@ Digitizer setting [CLK cycles] & Delay [ns] \\
 
 \chapter{TLB Software}
 
-Because both the TLB and the TRB use the same GPIO board, the TLB readout software has used as an example the existing TRB readout software, \href{https://gitlab.cern.ch/faser/trackerreadout}{gitlab.cern.ch/faser/trackerreadout}. In what follows, the TRB software is introduced and its modifications into TLB software are explained.
+Both the TLB and the TRB use the same design of GPIO board and thus the low-level control software is shared. In what follows, the TRB software is introduced and its modifications into TLB software are explained.
 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.6\textwidth]{ChapterDAQ/Figs/Software/TLBwithPowerSupply.png}
-\caption[TRB lab set-up]{TRB lab set-up in building 161, CERN, the TRB is powered via the generator with 24.0 V and 0.06 A and connected via USB 2.0 to a laptop for connection tests.}
+\caption[TRB lab set-up]{TRB lab set-up in building 161, CERN, the TRB is powered via the generator with 24.0 V and 0.06 A and connected via USB 3.0 to a laptop for connection tests.}
 \label{fig:TRBbdg161Setup}
 \end{figure}
 
-\section{TRB connection setup}
 
-Fig. \ref{fig:TRBbdg161Setup} shows the TRB powered and connected to a laptop, ready to be tested with an executable called USBTest found in the aforementioned trackerreadout repository. This program tests the USB connection by listing all devices found on the USB ports. It outputs an error message if the TRB hasn't been found "ERROR: Device not found! -> Check connection and power" as seen on Fig. \ref{fig:USBtest}. Two types of common mistakes can occur not powering the board with the required 24 V and 0.06 A or connecting the board with the wrong cable. At the time of testing, the TRB interfaces with the computer through USB 3.0. It can also transfer data via USB 2.0 though this leads to truncated data transfers. Down the line, Ethernet transfer will be supported, without affecting existing code.
+\section{TRB/TLB communication program structure}
 
-The connection setup executable is run through the following command.
-\begin{lstlisting}
-./USBTest
-\end{lstlisting}
-
-\begin{figure}[htbp!] 
-\centering    
-\includegraphics[width=0.6\textwidth]{ChapterDAQ/Figs/Software/USBTest.jpg}
-\caption[USBTest]{USBTest executable found on the trackerreadout repository.}
-\label{fig:USBtest}
-\end{figure}
-
-\section{TRB communication program structure}
-
-To send instructions to the board we are going to use the GPIO base class. This contains the most important function called SendAndRetrieve. It allows the user to change bits at a certain address in memory. A typical program structure to access either the TLB or TRB would be. 
+To send instructions to the board, the GPIO base class is used. This contains the most important function called SendAndRetrieve. It allows the user to change bits at a certain address in memory. A typical program structure to access either the TLB or TRB would be. 
 
 \begin{lstlisting}[caption={In this example, SendAndRetrieve has two parameters: 0x02 and 0x1. 0x02 corresponds to the address in memory and 0x01 corresponds to the payload.},captionpos=b]
 #include "../TrackerReadout/GPIOBaseClass.h"
@@ -742,10 +754,6 @@ The SendAndRetrieve command expects the following arguments. \begin{lstlisting}
 bool GPIOBaseClass::SendAndRetrieve(uint8_t CmdID, uint16_t CmdArg, uint16_t* AnswArg)
 \end{lstlisting}
 The first argument "CmdID" is the address in memory and tells the board where to write the second argument "CmdArg" which is the actual bit to change. The last argument "AnswArg" is what the program will write into when it receives something back from the board. In general it will send back the CmdID unless it is requesting specific data. A good check is to verify after each SendAndRetrieve that CmdID == AnswArg.
-
-\section{TLB Configuration Code}
-
-
 
 \section{Configuration json}
 \label{configuration}
@@ -782,7 +790,7 @@ The GPIODrivers sub-folder located in the main FASER DAQ repository (\href{https
     \label{fig:GPIOBaseClass}
 \end{figure}
 
-The TLBAccess\footnote{\href{https://faserdaq.web.cern.ch/faserdaq/gpiodrivers/doc/html/class_f_a_s_e_r_1_1_t_l_b_access.html\#ada95a891d48b8d907e49e51ec3a6d5de}{TLBAccess's documentation.}} is an API to communicate with the Trigger Logic Board included in above package. It inherits from the GPIOBaseClass and mostly uses the SendAndRetrieve command described earlier. A typical use of the library would be to parse a json configuration file and store it as a variable.
+The TLBAccess\footnote{\href{https://faserdaq.web.cern.ch/faserdaq/gpiodrivers/doc/html/class_f_a_s_e_r_1_1_t_l_b_access.html\#ada95a891d48b8d907e49e51ec3a6d5de}{TLBAccess's documentation.}} is an API to communicate with the Trigger Logic Board included in the above package. It inherits from the GPIOBaseClass and mostly uses the SendAndRetrieve command described earlier. A typical use of the library would be to parse a json configuration file and store it as a variable.
 
 \lstinputlisting[language=C++,caption={Example json configuration format used to configure the TLB.},captionpos=b]{ChapterDAQ/Code/TLBAccess_config_TLBConfiguration.JSON}
 
@@ -814,7 +822,7 @@ The user would then pass the stored parsed json to the ConfigureAndVerifyTLB(jso
     \draw[arrow] (dec2) -- (dec1);
     \draw[arrow] (dec1) -| node[anchor=south] {yes} (stop);
     \end{tikzpicture}
-    \caption{The ConfigureAndVerifiyTLB() function takes as an input a json configuration file and  will try multiple time, in case of an error, to configure the board.}
+    \caption{The ConfigureAndVerifyTLB() function takes as an input a json configuration file and  will try a pre-defined amount of time, in case of an error, to configure the board.}
     \label{fig:ConfigureAndVerifyTLB()}
 \end{figure}
 
@@ -1112,5 +1120,6 @@ This function turns on the TLB's data outputting system and creates a secondary 
 Also implemented is a TLBDecode code to check if is a trigger or monitoring header during the PollData. This can also be used to decode standalone the TLB's data but ultimately the decoding will be done after the event builder.
 
 \subsection{TriggerReceiver Module.}
+\label{TriggerReceiverModule}
 
 For the daq modules, I worked on the TriggerReceiver located in Faser/daq/src/Modules/TriggerReceiver in the gitlab repository. This folder contains two files, the header and the main. The Trigger Receiver module works similarly to the test program in Fig. \ref{fig:TLBAccessExampleDiagram} in that it is also able to configure, start/stop and readout the TLB. The main difference is that the TLBAccess can run as a standalone software whereas the TriggerReceiver Module is used to integrate the TLB into a common framework provided by DAQling that allows all individual hardware from the FASER experiment to be integrated together.

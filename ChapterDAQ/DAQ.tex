@@ -19,12 +19,12 @@ My work focused on the understanding of the Trigger and Data Acquisition System 
 
 The DAQ architecture digests information from three different kinds of detectors (in grey in Fig. \ref{fig:DAQArchitecture}), 72 SemiConductor Tracker modules (SCT), 10 scintillators and 4 calorimeters. The SCT modules are connected to tracker readout boards whereas the scintillators and calorimeter are connected to the digitizer. The signals from the scintillators and calorimeters are combined in pairs (AND, OR or one-only) to form 8 trigger outputs that go straight into the TLB. The TLB then maps the 8 trigger outputs into 4 final trigger lines via a Look-up Table described in section \ref{LUT}. Any signal in the 4 trigger lines will ultimately decide whether we want to save the signal as a physical event or not. The tracker modules do not contribute to forming a trigger decision, this is done solely using calorimeter and scintillator information. They are readout on a trigger accept signal only. On top of the four trigger lines coming from the scintillators and the calorimeters, two additional trigger accept signals can be created by a random trigger or software trigger generated internally by the TLB. In total, the TLB outputs six trigger lines, that can all be prescaled or vetoed, and form a Level 1 Accept (L1A). If the board decides to save the event for further analysis, it sends the L1A signal to both the digitizer and to the tracker readout boards which initiates the read-out of the subdetector's event data from the respective onboard buffers to the data acquisition server in a server room above ground.
 
-Additionally, the TLB needs to receive time information through the LHC beam synchronous timing system (BST). The orbit can be passed directly via LEMO cable to the TLB. This information is then used to assign the Bunch Crossing Reset (BCR) signal. The clock signal however needs to pass through a "clock cleaner" which is a commercial board that ensures stables and high quality clock signal \cite{sfyrla_central_2019}.
+Additionally, the TLB needs to receive time information through the LHC beam synchronous timing system (BST). The orbit can be passed directly via LEMO cable to the TLB. This information is then used to assign the Bunch Crossing Reset (BCR) signal. The clock signal however needs to pass through a "clock cleaner" which is a commercial board that ensures stables and high quality clock signal.
 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.8\textwidth]{ChapterDAQ/Figs/GeneralDAQ/Architecture.jpg}
-\caption[DAQ Architecture]{DAQ Architecture - The TLB processes trigger signals from the scintillators and the calorimeter and returns an L1A to the tracker board and the digitizer \cite{noauthor_faser_nodate}.}
+\caption[DAQ Architecture]{DAQ Architecture - The TLB processes trigger signals from the scintillators and the calorimeter and returns an L1A to the tracker board and the digitizer.}
 \label{fig:DAQArchitecture}
 \end{figure}
 
@@ -39,7 +39,7 @@ Additionally, the TLB needs to receive time information through the LHC beam syn
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.8\textwidth]{ChapterDAQ/Figs/GeneralDAQ/DAQDataFlow.jpg}
-\caption[DAQ Dataflow]{DAQ Dataflow - The front-end electronics will each have their own receiver application which takes the initial raw data, adds a fragment header and sends it to the Event Builder \cite{noauthor_faser_nodate}.}
+\caption[DAQ Dataflow]{DAQ Dataflow - The front-end electronics will each have their own receiver application which takes the initial raw data, adds a fragment header and sends it to the Event Builder.}
 \label{fig:DAQDataFlow}
 \end{figure}
 
@@ -143,7 +143,7 @@ The metric is periodically registered in a monitoring database which Grafana int
 \begin{wrapfigure}{R}{0.38\textwidth}
 \centering    
 \includegraphics[width=0.36\textwidth]{ChapterDAQ/Figs/GeneralDAQ/UnigeUSB3GPIO.jpg}
-\caption[Unige USB3 GPIO]{The TLB uses the same Unige USB3 GPIO board as the TRB for the "core", highlighted in red. An additional adapter board and mezzanine are used to interface with hardware signals \cite{debieux_faser_2019}.}
+\caption[Unige USB3 GPIO]{The TLB uses the same Unige USB3 GPIO board as the TRB for the "core", highlighted in red. An additional adapter board and mezzanine are used to interface with hardware signals.}
 \label{fig:UnigeUSB3GPIO}
 \end{wrapfigure}
 
@@ -155,7 +155,7 @@ Both TLB and TRB boards have a standalone GUI to perform the initial testing. As
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.8\textwidth]{ChapterDAQ/Figs/GeneralDAQ/DAQGui.jpg}
-\caption[DAQ GUI]{The DAQ GUI has three tabs, one to start DAQ and send slow control commands, one to configure inputs and prescales and the last one to set the LUT \cite{debieux_faser_2019}.}
+\caption[DAQ GUI]{The DAQ GUI has three tabs, one to start DAQ and send slow control commands, one to configure inputs and prescales and the last one to set the LUT.}
 \label{fig:DAQGui}
 \end{figure}
 
@@ -179,7 +179,7 @@ The Monitoring Data, used for debugging, follows the same word order but has a t
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=0.8\textwidth]{ChapterDAQ/Figs/GeneralDAQ/ReadoutData.jpg}
-\caption[TLB Trigger and Monitoring Data output]{The TLB can output Trigger Data and/or  Monitoring Data \cite{debieux_faser_2019}.}
+\caption[TLB Trigger and Monitoring Data output]{The TLB can output Trigger Data and/or  Monitoring Data.}
 \label{fig:ReadoutData}
 \end{figure}
 
@@ -661,7 +661,7 @@ To test the simple deadtime, we generate with the pulse generator 10 Mhz pulses 
 
 \nomenclature[z-BCID]{BCID}{Bunch Counter Identifier}
 
-The deadtime manager takes care of vetoing L1As via multiple criterium. One of them is that an L1A cannot be too close the a BCR. This behaviour is well described in the specifications \cite{debieux_trigger_2019}. "A veto signal is generated if a BCR was sent in the last 6 CLKs, this CLK or the next two CLK cycles, i.e, if BCR-3 is set in the last 9 CLK cycles". The orbit delay generates the BCR-3 three CLK cycles earlier. In this test we are sending a pulse signal of 1[kHz], width 40ns and 1 Volt peak to peak and we fill a 10'000KB file with L1As. In Fig.\ref{fig:DeadtimeBig} we plot the BCID range from 0 to 3563. We find while zooming in on the beginning in Fig.\ref{fig:DeadtimeBeginning} and on the end in Fig. \ref{fig:DeadtimeEnd} that it actually goes from 3 to 3557 and that we are missing 9 BCIDs as expected.
+The deadtime manager takes care of vetoing L1As via multiple criterium. One of them is that an L1A cannot be too close the a BCR. This behaviour is well described in the specifications. "A veto signal is generated if a BCR was sent in the last 6 CLKs, this CLK or the next two CLK cycles, i.e, if BCR-3 is set in the last 9 CLK cycles". The orbit delay generates the BCR-3 three CLK cycles earlier. In this test we are sending a pulse signal of 1[kHz], width 40ns and 1 Volt peak to peak and we fill a 10'000KB file with L1As. In Fig.\ref{fig:DeadtimeBig} we plot the BCID range from 0 to 3563. We find while zooming in on the beginning in Fig.\ref{fig:DeadtimeBeginning} and on the end in Fig. \ref{fig:DeadtimeEnd} that it actually goes from 3 to 3557 and that we are missing 9 BCIDs as expected.
 
 \begin{figure}[htbp!] 
 \centering    
@@ -695,7 +695,7 @@ Another thing we are able to see in the output data are the sources of veto. For
 
 \subsection{Output Delay}
 
-The Output delay consists of delaying the outgoing L1A signal from the TLB. "It is a programmable delay for sending L1A signals at the right latency for each readout output. Each output delay is individually set by SC in CLK counts (7bits)" \cite{debieux_trigger_2019}. The option in the GUI is labelled DigitizerDelay and we tried three different options presented in Table \ref{table:Outputtable}. The results can be seen on Fig. \ref{fig:OutputDelay}. From left to right we see the first signal has the 16 clock cycle delay which corresponds to 400 ns, the second pulse is with the 4 clock cycle delay which corresponds to 100 ns and the third pulse is with no delay. We see the inherent delay from computing which is roughly 100 ns.
+The Output delay consists of delaying the outgoing L1A signal from the TLB. "It is a programmable delay for sending L1A signals at the right latency for each readout output. Each output delay is individually set by SC in CLK counts (7bits)". The option in the GUI is labelled DigitizerDelay and we tried three different options presented in Table \ref{table:Outputtable}. The results can be seen on Fig. \ref{fig:OutputDelay}. From left to right we see the first signal has the 16 clock cycle delay which corresponds to 400 ns, the second pulse is with the 4 clock cycle delay which corresponds to 100 ns and the third pulse is with no delay. We see the inherent delay from computing which is roughly 100 ns.
 
 \begin{table}
 \caption{Output delay.}

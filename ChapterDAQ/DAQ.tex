@@ -1074,7 +1074,7 @@ The direct parameters use the same logic so won't be explained into details here
 
 \subsection{Reading out Data}
 
-Now that the board is configured\footnote{The LUT's configuration would be set by now as well using functions written by O. Theiner.} we can read out the data. To start the data acquisition we call the StartReadout function that takes as an argument an integer that specifies if we want to enable Trigger/Monitoring data.
+Now that the board is configured\footnote{The LUT's configuration would be set by now as well using functions written by O. Theiner.}, the data can be read out. To start the data acquisition we call the StartReadout function that takes as an argument an integer that specifies if we want to enable Trigger/Monitoring data.
 \begin{lstlisting}
 tlb->StartReadout(WhatToRead);
 \end{lstlisting}

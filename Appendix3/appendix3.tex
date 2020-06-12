@@ -8,8 +8,10 @@
 \begin{table}[htbp]
   \centering
   \caption{Full Variable Layout TLB Configuration}
+  \scalebox{0.7}{
     \begin{tabular}{rrlrrr}
     \multicolumn{1}{l}{Start Index} & \multicolumn{1}{l}{Next Index} & Name  & \multicolumn{1}{l}{Bit Size} & \multicolumn{1}{l}{Min} & \multicolumn{1}{l}{Max} \\
+    \toprule
     0     & 1     & SamplingPhase & 1     & 0     & 1 \\
     1     & 2     & SamplingPhase & 1     & 0     & 1 \\
     2     & 3     & SamplingPhase & 1     & 0     & 1 \\
@@ -49,5 +51,6 @@
     172   & 173   & Enable & 1     & 0     & 1 \\
     173   & 174   & Enable & 1     & 0     & 1 \\
     \end{tabular}%
+    }
   \label{tab:VariableLayoutTLBConfigurationFULL}%
 \end{table}%
